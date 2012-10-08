@@ -32,6 +32,7 @@ action :create do
   user_resource             :create
   dir_resource              :create
   authorized_keys_resource  :create
+  ssh_config_resource       :create
   id_rsa_resource           :create
   keygen_resource           :create
   dotfiles_resource         :create
@@ -40,6 +41,7 @@ end
 action :remove do
   keygen_resource           :delete
   authorized_keys_resource  :delete
+  ssh_config_resource       :delete
   id_rsa_resource           :delete
   dir_resource              :delete
   user_resource             :remove
@@ -49,6 +51,7 @@ action :modify do
   user_resource             :modify
   dir_resource              :create
   authorized_keys_resource  :create
+  ssh_config_resource       :create
   id_rsa_resource           :create
   keygen_resource           :create
 end
@@ -57,6 +60,7 @@ action :manage do
   user_resource             :manage
   dir_resource              :create
   authorized_keys_resource  :create
+  ssh_config_resource       :create
   id_rsa_resource           :create
   keygen_resource           :create
 end
@@ -65,6 +69,7 @@ action :lock do
   user_resource             :lock
   dir_resource              :create
   authorized_keys_resource  :create
+  ssh_config_resource       :create
   id_rsa_resource           :create
   keygen_resource           :create
 end
@@ -73,6 +78,7 @@ action :unlock do
   user_resource             :unlock
   dir_resource              :create
   authorized_keys_resource  :create
+  ssh_config_resource       :create
   id_rsa_resource           :create
   keygen_resource           :create
 end
@@ -89,7 +95,7 @@ end
 
 def normalize_bool(val)
   case val
-  when 'no','false',false then false
+  when 'no','false',false, nil then false
   else true
   end
 end
@@ -145,6 +151,20 @@ def authorized_keys_resource(exec_action)
     action      :nothing
   end
   r.run_action(exec_action)
+  new_resource.updated_by_last_action(true) if r.updated_by_last_action?
+end
+
+def ssh_config_resource(exec_action)
+  r = template "#{@my_home}/.ssh/config" do
+    cookbook    'user'
+    source      'ssh_config.erb'
+    owner       new_resource.username
+    group       Etc.getpwnam(new_resource.username).gid
+    mode        '0600'
+    variables   :hosts => new_resource.hosts
+    action      :nothing
+  end
+  r.run_action(exec_action) if new_resource.hosts
   new_resource.updated_by_last_action(true) if r.updated_by_last_action?
 end
 

@@ -53,6 +53,7 @@ Array(user_array).each do |i|
     dotfiles     u['dotfiles']
     id_rsa       us["id_rsa"]
     id_rsa_pub   us["id_rsa_pub"]
+    hosts        u["hosts"]
     action       u['action'].to_sym if u['action']
   end
 
