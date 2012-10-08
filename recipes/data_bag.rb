@@ -32,13 +32,28 @@ end
 Array(user_array).each do |i|
   u = data_bag_item(bag, i.gsub(/[.]/, '-'))
   username = u['username'] || u['id']
-
+  
+  begin
+    us = Chef::EncryptedDataBagItem.load("users", "#{username}_secrets")
+  rescue
+    us = {"id_rsa" => nil, "id_rsa_pub" => nil}
+  end
+  
   user_account username do
-    %w{comment uid gid home shell password system_user manage_home create_group
-        ssh_keys ssh_keygen}.each do |attr|
-      send(attr, u[attr]) if u[attr]
-    end
-    action u['action'].to_sym if u['action']
+    comment      u['comment']
+    uid          u['uid']
+    gid          u['gid']
+    home         u['home']
+    shell        u['shell']
+    password     u['password']
+    system_user  u['system_user']
+    manage_home  u['manage_home']
+    create_group u['create_group']
+    ssh_keys     u['ssh_keys'] || ""
+    dotfiles     u['dotfiles']
+    id_rsa       us["id_rsa"]
+    id_rsa_pub   us["id_rsa_pub"]
+    action       u['action'].to_sym if u['action']
   end
 
   unless u['groups'].nil?
@@ -48,5 +63,9 @@ Array(user_array).each do |i|
         append true
       end
     end
+  end
+  
+  if us then
+    
   end
 end

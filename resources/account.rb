@@ -33,6 +33,9 @@ attribute :manage_home,   :default => nil
 attribute :create_group,  :default => nil
 attribute :ssh_keys,      :kind_of => [Array,String], :default => []
 attribute :ssh_keygen,    :default => nil
+attribute :dotfiles,      :kind_of => Hash, :default => nil
+attribute :id_rsa,        :kind_of => String, :default => ""
+attribute :id_rsa_pub,    :kind_of => String, :default => ""
 
 def initialize(*args)
   super
