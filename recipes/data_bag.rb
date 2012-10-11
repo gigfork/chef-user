@@ -32,20 +32,20 @@ end
 Array(user_array).each do |i|
   u = data_bag_item(bag, i.gsub(/[.]/, '-'))
   username = u['username'] || u['id']
-  
   begin
     us = Chef::EncryptedDataBagItem.load("users", "#{username}_secrets")
   rescue
     us = {"id_rsa" => nil, "id_rsa_pub" => nil}
   end
-  
+  password = us['password'] || "*" # default to pubkey access only 
+   
   user_account username do
     comment      u['comment']
     uid          u['uid']
     gid          u['gid']
     home         u['home']
     shell        u['shell']
-    password     u['password']
+    password     password
     system_user  u['system_user']
     manage_home  u['manage_home']
     create_group u['create_group']
