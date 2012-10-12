@@ -229,7 +229,7 @@ def dotfiles_resource(exec_action)
   my_home  = @my_home
   dotfiles = new_resource.dotfiles
 
-  if dotfiles then
+  if dotfiles and not dotfiles.empty? then
     git "#{dotfiles["path"]}" do
       repository dotfiles["url"]
       reference  dotfiles["reference"] 
