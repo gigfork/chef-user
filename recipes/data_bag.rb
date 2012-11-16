@@ -38,7 +38,16 @@ Array(user_array).each do |i|
     us = {"id_rsa" => nil, "id_rsa_pub" => nil}
   end
   password = us['password'] || "*" # default to pubkey access only 
-   
+  
+  unless u['groups'].nil?
+    u['groups'].each do |groupname|
+      group groupname do
+        action :create
+
+      end
+    end
+  end
+
   user_account username do
     comment      u['comment']
     uid          u['uid']
@@ -62,11 +71,8 @@ Array(user_array).each do |i|
       group groupname do
         members username
         append true
+        action :modify
       end
     end
-  end
-  
-  if us then
-    
   end
 end
