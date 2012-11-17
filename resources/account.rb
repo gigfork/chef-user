@@ -37,6 +37,8 @@ attribute :dotfiles,      :kind_of => Hash, :default => nil
 attribute :id_rsa,        :kind_of => String, :default => ""
 attribute :id_rsa_pub,    :kind_of => String, :default => ""
 attribute :hosts,         :kind_of => Hash, :default => nil
+attribute :secrets,       :kind_of => [TrueClass, FalseClass], :default => false
+
 def initialize(*args)
   super
   @action = :create

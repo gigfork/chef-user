@@ -235,6 +235,7 @@ def dotfiles_resource(exec_action)
       reference  dotfiles["reference"] 
       user       new_resource.username
       action     :sync
+      ignore_failure true
     end
 
     if dotfiles["map"] then
@@ -243,6 +244,7 @@ def dotfiles_resource(exec_action)
         link dotfile_link do
           to path
           not_if "test -L #{path}"
+          ignore_failure true
         end
       end
     end
