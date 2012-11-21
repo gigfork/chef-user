@@ -38,7 +38,8 @@ Array(user_array).each do |i|
   else
     log "no secrets for user: #{username}"
   end
-  password = us['password'] || "*" # default to pubkey access only 
+  password = us['password'] || "*" # This will disable passowrd login, i.e. pubkey access only.
+                                   # see man 5 shadow for more info
   
   unless u['groups'].nil?
     u['groups'].each do |groupname|
