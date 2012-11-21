@@ -32,15 +32,11 @@ end
 Array(user_array).each do |i|
   u = data_bag_item(bag, i.gsub(/[.]/, '-'))
   username = u['username'] || u['id']
-  begin
-    us = {"id_rsa" => nil, "id_rsa_pub" => nil}
-    if  u['secrets']
-      us = Chef::EncryptedDataBagItem.load("users", "#{username}_secrets")
-    else
-      log "no secrets for user: #{username}"
-    end
-  rescue
-    log "error fetching secrets for user: #{username}"
+  us = {}
+  if  u['secrets']
+    us = Chef::EncryptedDataBagItem.load("users", u['secrets'])
+  else
+    log "no secrets for user: #{username}"
   end
   password = us['password'] || "*" # default to pubkey access only 
   
