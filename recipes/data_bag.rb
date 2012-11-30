@@ -23,6 +23,7 @@ bag = node['user']['data_bag_name']
 # desired (ex. node['base']['user_accounts']), then set:
 #
 #     node['user']['user_array_node_attr'] = "base/user_accounts"
+
 user_array = node
 node['user']['user_array_node_attr'].split("/").each do |hash_key|
   user_array = user_array.send(:[], hash_key)
@@ -34,7 +35,7 @@ Array(user_array).each do |i|
   username = u['username'] || u['id']
   us = {}
   if  u['secrets']
-    us = Chef::EncryptedDataBagItem.load("users", u['secrets'])
+    us = encrypted_data_bag "users", u['secrets']
   else
     log "no secrets for user: #{username}"
   end
