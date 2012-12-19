@@ -31,42 +31,23 @@ end
 
 # only manage the subset of users defined
 Array(user_array).each do |i|
-  u = data_bag_item(bag, i.gsub(/[.]/, '-'))
-  username = u['username'] || u['id']
-  us = {}
-  if  u['secrets']
-    us = encrypted_data_bag "users", u['secrets']
-  else
-    log "no secrets for user: #{username}"
-  end
-  password = us['password'] || "*" # This will disable passowrd login, i.e. pubkey access only.
-                                   # see man 5 shadow for more info
-  
-  unless u['groups'].nil?
-    u['groups'].each do |groupname|
-      group groupname do
-        action :create
+  item = i.gsub(/[.]/, '-')
+  u = merged_data_bag_item bag, item
+  u['username'] ||= u['id']
+  u.delete("id")
 
-      end
-    end
-  end
+  u['password'] ||= "*" # default to pubkey access only
+  u['id_rsa'] ||= nil
+  u['id_rsa_pub'] ||= nil
 
   user_account username do
-    comment      u['comment']
-    uid          u['uid']
-    gid          u['gid']
-    home         u['home']
-    shell        u['shell']
-    password     password
-    system_user  u['system_user']
-    manage_home  u['manage_home']
-    create_group u['create_group']
-    ssh_keys     u['ssh_keys'] || ""
-    dotfiles     u['dotfiles']
-    id_rsa       us["id_rsa"]
-    id_rsa_pub   us["id_rsa_pub"]
-    hosts        u["hosts"]
-    action       u['action'].to_sym if u['action']
+    u.each do |key, value|
+      if key.eql? "action" then
+        send(key, u['action'].to_sym)
+      else
+        send(key, value)
+      end
+    end
   end
 
   unless u['groups'].nil?
