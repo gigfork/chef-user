@@ -40,7 +40,7 @@ Array(user_array).each do |i|
   u['id_rsa'] ||= nil
   u['id_rsa_pub'] ||= nil
 
-  user_account username do
+  user_account u['username'] do
     u.each do |key, value|
       if key.eql? "action" then
         send(key, u['action'].to_sym)
