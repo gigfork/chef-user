@@ -32,28 +32,33 @@ end
 # only manage the subset of users defined
 Array(user_array).each do |i|
   item = i.gsub(/[.]/, '-')
-  u = merged_data_bag_item bag, item
-  u['username'] ||= u['id']
-  u.delete("id")
+  u = merged_data_bag_item(bag, item).to_hash
+  u['username'] ||= item
+  u['dotfiles'] ||= Hash.new
 
   u['password'] ||= "*" # default to pubkey access only
-  u['id_rsa'] ||= nil
-  u['id_rsa_pub'] ||= nil
 
   user_account u['username'] do
-    u.each do |key, value|
-      if key.eql? "action" then
-        send(key, u['action'].to_sym)
-      else
-        send(key, value)
-      end
-    end
+    comment      u['comment']
+    uid          u['uid']
+    gid          u['gid']
+    home         u['home']
+    shell        u['shell']
+    password     u['password']
+    system_user  u['system_user']
+    manage_home  u['manage_home']
+    create_group u['create_group']
+    ssh_keys     u['ssh_keys'] || ""
+    dotfiles     u['dotfiles']
+    id_rsa       u["id_rsa"]
+    id_rsa_pub   u["id_rsa_pub"]
+    hosts        u["hosts"]
+    action       u['action'].to_sym if u['action']
   end
-
   unless u['groups'].nil?
     u['groups'].each do |groupname|
       group groupname do
-        members username
+        members u['username']
         append true
         action :modify
       end
