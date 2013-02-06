@@ -54,6 +54,7 @@ Array(user_array).each do |i|
     id_rsa_pub   u["id_rsa_pub"]
     hosts        u["hosts"]
     action       u['action'].to_sym if u['action']
+    ignore_failure true if u['action'].eql? "remove"
   end
   unless u['groups'].nil?
     u['groups'].each do |groupname|
