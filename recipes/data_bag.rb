@@ -23,6 +23,7 @@ bag = node['user']['data_bag_name']
 # desired (ex. node['base']['user_accounts']), then set:
 #
 #     node['user']['user_array_node_attr'] = "base/user_accounts"
+
 user_array = node
 node['user']['user_array_node_attr'].split("/").each do |hash_key|
   user_array = user_array.send(:[], hash_key)
@@ -30,22 +31,36 @@ end
 
 # only manage the subset of users defined
 Array(user_array).each do |i|
-  u = data_bag_item(bag, i.gsub(/[.]/, '-'))
-  username = u['username'] || u['id']
+  item = i.gsub(/[.]/, '-')
+  u = merged_data_bag_item(bag, item).to_hash
+  u['username'] ||= item
+  u['dotfiles'] ||= Hash.new
 
-  user_account username do
-    %w{comment uid gid home shell password system_user manage_home create_group
-        ssh_keys ssh_keygen}.each do |attr|
-      send(attr, u[attr]) if u[attr]
-    end
-    action u['action'].to_sym if u['action']
+  u['password'] ||= "*" # default to pubkey access only
+
+  user_account u['username'] do
+    comment      u['comment']
+    uid          u['uid']
+    gid          u['gid']
+    home         u['home']
+    shell        u['shell']
+    password     u['password']
+    system_user  u['system_user']
+    manage_home  u['manage_home']
+    create_group u['create_group']
+    ssh_keys     u['ssh_keys'] || ""
+    dotfiles     u['dotfiles']
+    id_rsa       u["id_rsa"]
+    id_rsa_pub   u["id_rsa_pub"]
+    hosts        u["hosts"]
+    action       u['action'].to_sym if u['action']
   end
-
   unless u['groups'].nil?
     u['groups'].each do |groupname|
       group groupname do
-        members username
+        members u['username']
         append true
+        action :modify
       end
     end
   end

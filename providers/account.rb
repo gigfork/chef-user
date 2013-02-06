@@ -32,12 +32,17 @@ action :create do
   user_resource             :create
   dir_resource              :create
   authorized_keys_resource  :create
+  ssh_config_resource       :create
+  id_rsa_resource           :create
   keygen_resource           :create
+  dotfiles_resource         :create
 end
 
 action :remove do
   keygen_resource           :delete
   authorized_keys_resource  :delete
+  ssh_config_resource       :delete
+  id_rsa_resource           :delete
   dir_resource              :delete
   user_resource             :remove
 end
@@ -46,6 +51,8 @@ action :modify do
   user_resource             :modify
   dir_resource              :create
   authorized_keys_resource  :create
+  ssh_config_resource       :create
+  id_rsa_resource           :create
   keygen_resource           :create
 end
 
@@ -53,6 +60,8 @@ action :manage do
   user_resource             :manage
   dir_resource              :create
   authorized_keys_resource  :create
+  ssh_config_resource       :create
+  id_rsa_resource           :create
   keygen_resource           :create
 end
 
@@ -60,6 +69,8 @@ action :lock do
   user_resource             :lock
   dir_resource              :create
   authorized_keys_resource  :create
+  ssh_config_resource       :create
+  id_rsa_resource           :create
   keygen_resource           :create
 end
 
@@ -67,6 +78,8 @@ action :unlock do
   user_resource             :unlock
   dir_resource              :create
   authorized_keys_resource  :create
+  ssh_config_resource       :create
+  id_rsa_resource           :create
   keygen_resource           :create
 end
 
@@ -82,7 +95,7 @@ end
 
 def normalize_bool(val)
   case val
-  when 'no','false',false then false
+  when 'no','false',false, nil then false
   else true
   end
 end
@@ -141,6 +154,45 @@ def authorized_keys_resource(exec_action)
   new_resource.updated_by_last_action(true) if r.updated_by_last_action?
 end
 
+def ssh_config_resource(exec_action)
+  r = template "#{@my_home}/.ssh/config" do
+    cookbook    'user'
+    source      'ssh_config.erb'
+    owner       new_resource.username
+    group       Etc.getpwnam(new_resource.username).gid
+    mode        '0600'
+    variables   :hosts => new_resource.hosts
+    action      :nothing
+  end
+  r.run_action(exec_action) if new_resource.hosts
+  new_resource.updated_by_last_action(true) if r.updated_by_last_action?
+end
+
+def id_rsa_resource(exec_action)
+  r = template "#{@my_home}/.ssh/id_rsa" do
+    cookbook    'user'
+    source      'id_rsa.erb'
+    owner       new_resource.username
+    group       Etc.getpwnam(new_resource.username).gid
+    mode        '0600'
+    variables   :id_rsa => new_resource.id_rsa
+    action      :nothing
+  end
+  r.run_action(exec_action) if new_resource.id_rsa
+  
+  r = template "#{@my_home}/.ssh/id_rsa.pub" do
+    cookbook    'user'
+    source      'id_rsa.erb'
+    owner       new_resource.username
+    group       Etc.getpwnam(new_resource.username).gid
+    mode        '0600'
+    variables   :id_rsa => new_resource.id_rsa_pub
+    action      :nothing
+  end
+  r.run_action(exec_action) if new_resource.id_rsa_pub
+  new_resource.updated_by_last_action(true) if r.updated_by_last_action?
+end
+
 def keygen_resource(exec_action)
   # avoid variable scoping issues in resource block
   fqdn, my_home = node['fqdn'], @my_home
@@ -168,6 +220,33 @@ def keygen_resource(exec_action)
         action :delete
       end
       new_resource.updated_by_last_action(true) if r.updated_by_last_action?
+    end
+  end
+end
+
+def dotfiles_resource(exec_action)
+  # avoid variable scoping issues in resource block
+  my_home  = @my_home
+  dotfiles = new_resource.dotfiles
+
+  if dotfiles and not dotfiles.empty? then
+    git "#{dotfiles["path"]}" do
+      repository dotfiles["url"]
+      reference  dotfiles["reference"] 
+      user       new_resource.username
+      action     :sync
+      ignore_failure true
+    end
+
+    if dotfiles["map"] then
+      dotfiles["map"].each do |file, dotfile_link|
+        path = "#{dotfiles["path"]}/#{file}"
+        link dotfile_link do
+          to path
+          not_if "test -L #{path}"
+          ignore_failure true
+        end
+      end
     end
   end
 end
