@@ -113,6 +113,7 @@ def user_resource(exec_action)
     password  new_resource.password if new_resource.password
     system    new_resource.system_user
     supports  :manage_home => manage_home
+    ignore_failure true if exec_action.to_s.eql? "remove"
     action    :nothing
   end
   r.run_action(exec_action)
